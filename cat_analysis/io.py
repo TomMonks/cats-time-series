@@ -115,7 +115,7 @@ class CleanTrip(object):
         for col in df.columns[3:]:
             dict_apply[str(col)] = (set, drop_nan, revert_to_scalar)
 
-        df_agg = pd.concat([df_small.groupby(by='timestamp')['catsid'].count(),
+        df_agg = pd.concat([df.groupby(by='timestamp')['catsid'].count(),
                             df.groupby(by='timestamp')['type'].apply(set),
                             df.groupby(by='timestamp').agg(dict_apply)],
                             axis=1)
