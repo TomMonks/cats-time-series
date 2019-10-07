@@ -56,7 +56,7 @@ class CleanTrip(object):
         '''
         return self._data
 
-    def resample(self, rule):
+    def resample(self, rule, interp=False):
         '''
         Convenience function to convert the frequency 
         of observation in the timeseries
@@ -66,12 +66,19 @@ class CleanTrip(object):
         Parameters:
         --------
         rule - str, see pd.DataFrame.resample()
+        interp - bool.  True = linear interpolation (default=False)
 
         Returns:
         ---------
         DataFrame - in the new obervation period
         '''
-        return self._data.resample(rule=rule).mean()
+        data = self._data.resample(rule=rule).mean()
+
+        #dosen't work with spline or polynomial 
+        if interp:
+            data = data.interpolate(method='linear')
+
+        return data
 
     def clean(self):
         df = self._read_trip()
