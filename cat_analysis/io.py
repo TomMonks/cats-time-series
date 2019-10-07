@@ -120,6 +120,10 @@ class CleanTrip(object):
                             df.groupby(by='timestamp').agg(dict_apply)],
                             axis=1)
 
+        #is there a more efficient way to do this - during contact
+        #it is already a datetime datatype...
+        df_agg.index = pd.to_datetime(df_agg.index)
+
         df_agg.rename(columns={'catsid':'count'})
 
         to_drop = [col for col in df_agg.columns[2:] if 'set' in col]
