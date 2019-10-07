@@ -8,7 +8,7 @@ Data are stored within individual trips files
 
 import os
 
-def read_trips(filepath):
+def read_trip_file_names(filepath):
     """
     Read in the names of ALL .csv files within the subdirectories contained within the 
     filepath 
@@ -26,3 +26,6 @@ def read_trips(filepath):
             files.append(os.path.join(dirpath, filename))
             
     return files
+
+
+
