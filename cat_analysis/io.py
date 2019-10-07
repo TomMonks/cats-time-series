@@ -42,7 +42,6 @@ class CleanTrip(object):
     3. The file contains a column 'timestamp'
     4. There data contain multiple entries per timestamp that must be combined.
     
-
     '''
     def __init__(self, filepath):
         self._filepath = filepath
@@ -57,10 +56,28 @@ class CleanTrip(object):
         '''
         return self._data
 
+    def resample(self, rule):
+        '''
+        Convenience function to convert the frequency 
+        of observation in the timeseries
+
+        e.g. 1s -> 30s
+
+        Parameters:
+        --------
+        rule - str, see pd.DataFrame.resample()
+
+        Returns:
+        ---------
+        DataFrame - in the new obervation period
+        '''
+        return self._data.resample(rule=rule).mean()
+
     def clean(self):
         df = self._read_trip()
         self._format_headers(df)
-        self._format_headers(df)
+        self._format_as_timeseries(df)
+        df = self._replace_missing_values_with_nan(df)
         self._data = self._aggregate_rows(df)
 
 
@@ -95,12 +112,16 @@ class CleanTrip(object):
         '''
         df['timestamp'] = pd.to_datetime(df['timestamp'], )
 
+    def _replace_missing_values_with_nan(self, df):
+        missing_value = 8388607.0
+        return df.replace(missing_value, None)
     
     def _aggregate_rows(self, df):
         '''
         Aggregate rows so that each second has a single entry
         in dataframe 
         '''
+
         #lambdas to drop any NaNs from a set, revert to scaler
         drop_nan = lambda a: {x for x in a if x==x}
         revert_to_scalar = lambda a: a.values[len(a)-1] if len(a) > 0 else None
@@ -122,7 +143,7 @@ class CleanTrip(object):
 
         #is there a more efficient way to do this - during contact
         #it is already a datetime datatype...
-        df_agg.index = pd.to_datetime(df_agg.index)
+        #df_agg.index = pd.to_datetime(df_agg.index)
 
         df_agg.rename(columns={'catsid':'count'})
 
