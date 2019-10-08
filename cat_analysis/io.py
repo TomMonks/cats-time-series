@@ -43,9 +43,25 @@ class CleanTrip(object):
     4. There data contain multiple entries per timestamp that must be combined.
     
     '''
-    def __init__(self, filepath):
+    def __init__(self, filepath, wave_features=None):
+        '''
+        Constructor method
+
+        Parameters:
+        ---------
+        filepath - str, the path of the raw data file for trip (.csv)
+        wave_features - List, a list of features to engineer. Specified
+                        by a string with the same name as the 
+                        equivalent numpy array method
+                        e.g. 1 ['mean', 'std', 'min', 'max']
+                        e.g. 2 ['mean']
+
+        '''
         self._filepath = filepath
         self._data = None
+        if wave_features == None:
+            wave_features = []
+        self._wave_features = wave_features
     
     def _get_data(self):
         '''
@@ -167,10 +183,16 @@ class CleanTrip(object):
                                                             .replace('nan','')
                                                             ,sep=' '))
             
-            df[col+'_avg'] = df[np_label].map(lambda x: x.mean() if x.shape[0] > 0 else None)
-            df[col+'_std'] = df[np_label].map(lambda x: x.std() if x.shape[0] > 0 else None)
-            df[col+'_min'] = df[np_label].map(lambda x: x.min() if x.shape[0] > 0 else None)
-            df[col+'_max'] = df[np_label].map(lambda x: x.max() if x.shape[0] > 0 else None)
+            for func in self._wave_features:
+                feature_name = col + '_' + func
+                df[feature_name] = df[np_label].map(lambda x: 
+                                                    getattr(np, func)(x, axis=0)
+                                                    if x.shape[0] > 0 else None)
+
+            #df[col+'_avg'] = df[np_label].map(lambda x: x.mean() if x.shape[0] > 0 else None)
+            #df[col+'_std'] = df[np_label].map(lambda x: x.std() if x.shape[0] > 0 else None)
+            #df[col+'_min'] = df[np_label].map(lambda x: x.min() if x.shape[0] > 0 else None)
+            #df[col+'_max'] = df[np_label].map(lambda x: x.max() if x.shape[0] > 0 else None)
         
             cols_to_drop.append(col)
             cols_to_drop.append(np_label)
