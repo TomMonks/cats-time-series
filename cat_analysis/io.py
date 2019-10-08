@@ -188,11 +188,6 @@ class CleanTrip(object):
                 df[feature_name] = df[np_label].map(lambda x: 
                                                     getattr(np, func)(x, axis=0)
                                                     if x.shape[0] > 0 else None)
-
-            #df[col+'_avg'] = df[np_label].map(lambda x: x.mean() if x.shape[0] > 0 else None)
-            #df[col+'_std'] = df[np_label].map(lambda x: x.std() if x.shape[0] > 0 else None)
-            #df[col+'_min'] = df[np_label].map(lambda x: x.min() if x.shape[0] > 0 else None)
-            #df[col+'_max'] = df[np_label].map(lambda x: x.max() if x.shape[0] > 0 else None)
         
             cols_to_drop.append(col)
             cols_to_drop.append(np_label)
