@@ -81,9 +81,14 @@ class CleanTrip(object):
         return data
 
     def clean(self):
+        '''
+        Process the raw data into cleaner time series.
+        '''
         df = self._read_trip()
         self._format_headers(df)
+        df = self._drop_invalid_dates(df)
         self._format_as_timeseries(df)
+        self._format_wave_form_data(df)
         df = self._replace_missing_values_with_nan(df)
         self._data = self._aggregate_rows(df)
 
@@ -109,6 +114,22 @@ class CleanTrip(object):
                      )
 
 
+    def _drop_invalid_dates(self, df):
+        '''
+        Removes any invalid rows from the dataset
+        These are flagged as 'Invalid Date' in the
+        timestamp column.
+
+        Returns:
+        --------
+        Dataframe -- containing data minus invalid dates
+
+        Parameters:
+        --------
+        df -- pandas.DataFrame, containing raw time series
+        '''
+        return df[~df['timestamp'].str.contains("Invalid Date")]
+
     def _format_as_timeseries(self, df):
         '''
         Convert timestamp column to pandas timeseries data
@@ -123,6 +144,40 @@ class CleanTrip(object):
         missing_value = 8388607.0
         return df.replace(missing_value, None)
     
+
+    def _format_wave_form_data(self, df):
+        '''
+        Columns 24+ contain multiple observations per second.
+        This is stored in string format.  This procedure
+        converts to numpy array and then produces new features based
+        on moments of the distribution and other measures.
+
+        Parameters:
+        ---------
+        df - pandas - DataFrame containing the waveform data
+        '''
+        cols_to_drop = []
+        from_column = 24
+
+        for col in df.columns[from_column:]:
+            
+            np_label = col + '_np'
+            
+            df[np_label] = df[col].apply(str).apply(lambda x: np.fromstring(x.replace(' \"',' ')
+                                                            .replace('nan','')
+                                                            ,sep=' '))
+            
+            df[col+'_avg'] = df[np_label].map(lambda x: x.mean() if x.shape[0] > 0 else None)
+            df[col+'_std'] = df[np_label].map(lambda x: x.std() if x.shape[0] > 0 else None)
+            df[col+'_min'] = df[np_label].map(lambda x: x.min() if x.shape[0] > 0 else None)
+            df[col+'_max'] = df[np_label].map(lambda x: x.max() if x.shape[0] > 0 else None)
+        
+            cols_to_drop.append(col)
+            cols_to_drop.append(np_label)
+            
+
+        df.drop(cols_to_drop, inplace=True, axis=1)
+
     def _aggregate_rows(self, df):
         '''
         Aggregate rows so that each second has a single entry
@@ -148,11 +203,8 @@ class CleanTrip(object):
                             df.groupby(by='timestamp').agg(dict_apply)],
                             axis=1)
 
-        #is there a more efficient way to do this - during contact
-        #it is already a datetime datatype...
-        #df_agg.index = pd.to_datetime(df_agg.index)
-
-        df_agg.rename(columns={'catsid':'count'})
+        
+        df_agg.rename(columns={'catsid':'merged_n'}, inplace=True)
 
         to_drop = [col for col in df_agg.columns[2:] if 'set' in col]
         df_agg = df_agg.drop(columns=to_drop)
