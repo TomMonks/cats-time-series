@@ -34,71 +34,7 @@ def read_trip_file_names(filepath):
 class DatasetOverview(object):
     pass
 
-class TripSummaryStatistics(object):
-    '''
-    Summary statistics for a cleaned trip
-    '''
-    def __init__(self, clean_trip):
-        '''
-        Create an instance of TripSummaryStatistics for an individual
-        trip.
 
-        Parameters:
-        -------
-        clean_trip, cats_analysis.io.CleanTrip.  Cleaned Trip Data
-        '''
-        self._clean_trip = clean_trip
-        self._summary = None
-        self._duration = -1.0
-
-
-    def _get_duration(self):
-        '''
-        Return trip duration in HH:MM:SS
-        '''
-        return self._get_duration
-
-    def _get_summary_table(self):
-        '''
-        Summary statistics for the trip
-        '''
-        return self._summary
-
-    def calculate(self, resample='30s', interp_missing=False):
-        '''
-        Calculate basic summary statistics for trip.
-
-        1. Trip Duration
-        2. Completely empty fields
-        3. For every field:
-            3.1 Mean,
-            3.2 Stdev,
-            3.3 Histogram.... think about that one. (numpy.hist?)
-            3.4 
-
-        Parameters:
-        ----------
-        resample -- str, interval to aggregate values over (defaul=30s) 
-        interp_missing -- bool, linear interpolation between missing values
-                          (default = False)
-        '''
-        
-        df = self._clean_trip.resample(resample, interp_missing)
-
-        self.duration = df.index.max() - df.index.min()
-
-        results = {}
-        results['per_missing'] = (1 - df.count()/df.shape[0])*100
-        results['mean'] = df.mean()
-        results['std'] = df.std()
-        results['min'] = df.min()
-        results['max'] = df.max()
-        results['median'] = df.quantile(q=0.5)
-        results['iqr'] = df.quantile(q=0.75) - df.quantile(q=0.25)
-        self._summary = pd.DataFrame(results)
-        
-    summary_table = property(_get_summary_table)
-    trip_duration = property(_get_duration)
 
     
 
@@ -145,7 +81,7 @@ class CleanTrip(object):
         '''
         return self._data
 
-    def resample(self, rule, interp_missing=False):
+    def resample(self, rule, smooth=False, interp_missing=False):
         '''
         Convenience function to convert the frequency 
         of observation in the timeseries
@@ -161,7 +97,10 @@ class CleanTrip(object):
         ---------
         DataFrame - in the new obervation period
         '''
-        data = self._data.resample(rule=rule).mean()
+        if smooth:
+            data = self._data.resample(rule=rule, label='right').mean()
+        else:
+            data = self._data.resample(rule=rule, label='right').last() 
 
         #dosen't work with spline or polynomial 
         if interp_missing:
