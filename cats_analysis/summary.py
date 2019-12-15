@@ -70,6 +70,8 @@ class TripSummaryStatistics(object):
         results['max'] = df.max()
         results['median'] = df.quantile(q=0.5)
         results['iqr'] = df.quantile(q=0.75) - df.quantile(q=0.25)
+        results['skew'] = df.skew()
+        results['kurtosis'] = df.kurtosis()
         self._summary = pd.DataFrame(results)
         
     summary_table = property(_get_summary_table)
