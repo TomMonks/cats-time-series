@@ -30,11 +30,23 @@ def read_trip_file_names(filepath):
             
     return files
 
+
+class DatasetOverview(object):
+    pass
+
 class TripSummaryStatistics(object):
     '''
     Summary statistics for a cleaned trip
     '''
     def __init__(self, clean_trip):
+        '''
+        Create an instance of TripSummaryStatistics for an individual
+        trip.
+
+        Parameters:
+        -------
+        clean_trip, cats_analysis.io.CleanTrip.  Cleaned Trip Data
+        '''
         self._clean_trip = clean_trip
         self._summary = None
         self._duration = -1.0
